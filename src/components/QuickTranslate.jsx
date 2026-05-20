@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { apiReview } from "../lib/api.js";
+import { apiReview, checkClientRateLimit } from "../lib/api.js";
 import { TONES, DEFAULT_TONE } from "../lib/tones.js";
 import { addEntry } from "../lib/hallOfShame.js";
 import { emit, on, EVENTS } from "../lib/bus.js";
@@ -11,6 +11,7 @@ const PLACEHOLDER =
 export default function QuickTranslate({ isActive }) {
   const editorRef = useRef(null);
   const [hasText, setHasText] = useState(false);
+  const [charCount, setCharCount] = useState(0);
   const [tone, setTone] = useState(DEFAULT_TONE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -42,6 +43,7 @@ export default function QuickTranslate({ isActive }) {
         editorRef.current.innerText = "";
       }
       setHasText(false);
+      setCharCount(0);
       if (scope === "all") {
         setResult(null);
         setError(null);
@@ -63,8 +65,37 @@ export default function QuickTranslate({ isActive }) {
   const getMessage = () =>
     (editorRef.current?.innerText || "").replace(/ /g, " ");
 
+  const handleKeyDown = (e) => {
+    const allowedKeys = [
+      "Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
+      "Tab", "Escape", "Enter", "Home", "End", "PageUp", "PageDown"
+    ];
+    const isControlKey = e.ctrlKey || e.metaKey;
+    const isSelectOrCopyKey = isControlKey && ["a", "c", "x", "v"].includes(e.key.toLowerCase());
+
+    if (allowedKeys.includes(e.key) || isControlKey || isSelectOrCopyKey) {
+      return;
+    }
+
+    const currentText = getMessage();
+    if (currentText.length >= 500) {
+      const selection = window.getSelection();
+      if (selection && selection.toString().length > 0) {
+        return;
+      }
+      e.preventDefault();
+    }
+  };
+
   const handleInput = () => {
-    const v = getMessage();
+    let v = getMessage();
+    if (v.length > 500) {
+      v = v.slice(0, 500);
+      if (editorRef.current) {
+        editorRef.current.innerText = v;
+      }
+    }
+    setCharCount(v.length);
     setHasText(v.trim().length > 0);
     emit(EVENTS.TYPING, { text: v });
   };
@@ -72,14 +103,25 @@ export default function QuickTranslate({ isActive }) {
   const handlePaste = (e) => {
     e.preventDefault();
     const text = (e.clipboardData || window.clipboardData).getData("text/plain");
+    const currentText = getMessage();
+    const selection = window.getSelection();
+    const selectionLength = selection ? selection.toString().length : 0;
+    const availableSpace = 500 - (currentText.length - selectionLength);
+    
+    if (availableSpace <= 0) {
+      return;
+    }
+    
+    const truncatedText = text.slice(0, availableSpace);
+
     if (document.queryCommandSupported?.("insertText")) {
-      document.execCommand("insertText", false, text);
+      document.execCommand("insertText", false, truncatedText);
     } else {
       const sel = window.getSelection();
       if (sel && sel.rangeCount) {
         const range = sel.getRangeAt(0);
         range.deleteContents();
-        range.insertNode(document.createTextNode(text));
+        range.insertNode(document.createTextNode(truncatedText));
         range.collapse(false);
       }
     }
@@ -89,6 +131,14 @@ export default function QuickTranslate({ isActive }) {
   const runReview = async (overrideTone) => {
     const message = getMessage();
     if (!message.trim() || loading) return;
+
+    const { allowed } = checkClientRateLimit();
+    if (!allowed) {
+      setError("WARNING: SUBMISSION OVERLOAD. You have submitted 5 or more requests within a 2-minute window. Please pause and allow the Compliance Officer to finish reading the existing printouts.");
+      emit(EVENTS.PLAY_SOUND, { name: "chord" });
+      return;
+    }
+
     const effectiveTone = overrideTone ?? tone;
     setLoading(true);
     setError(null);
@@ -125,9 +175,14 @@ export default function QuickTranslate({ isActive }) {
   return (
     <div className="co-form" role="group" aria-label="Quick Translate">
       <div className="field-row-stacked co-grow-row" style={{ width: "100%" }}>
-        <label htmlFor="co-quick-editor">
-          Enter your unfiltered workplace thought for HR-approved translation:
-        </label>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <label htmlFor="co-quick-editor">
+            Enter your unfiltered workplace thought for HR-approved translation:
+          </label>
+          <span style={{ fontSize: 11, color: charCount > 500 ? "red" : "#555" }}>
+            {charCount} / 500
+          </span>
+        </div>
         <div
           id="co-quick-editor"
           ref={editorRef}
@@ -135,6 +190,7 @@ export default function QuickTranslate({ isActive }) {
           contentEditable={!loading}
           suppressContentEditableWarning
           onInput={handleInput}
+          onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           data-placeholder={PLACEHOLDER}
           role="textbox"

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { apiReview } from "../lib/api.js";
+import { apiReview, checkClientRateLimit } from "../lib/api.js";
 import { TONES, DEFAULT_TONE } from "../lib/tones.js";
 import { addEntry } from "../lib/hallOfShame.js";
 import { emit, on, EVENTS } from "../lib/bus.js";
@@ -81,6 +81,14 @@ export default function EmailReview({ isActive }) {
 
   const runFresh = async () => {
     if (!body.trim() || loading || retoneLoading) return;
+
+    const { allowed } = checkClientRateLimit();
+    if (!allowed) {
+      setError("WARNING: SUBMISSION OVERLOAD. You have submitted 5 or more requests within a 2-minute window. Please pause and allow the Compliance Officer to finish reading the existing printouts.");
+      emit(EVENTS.PLAY_SOUND, { name: "chord" });
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setRetoneError(null);
@@ -122,6 +130,14 @@ export default function EmailReview({ isActive }) {
   const runRetone = async (newToneKey) => {
     if (!body.trim() || loading || retoneLoading) return;
     if (!assessmentResult || assessmentResult.safety_override) return;
+
+    const { allowed } = checkClientRateLimit();
+    if (!allowed) {
+      setRetoneError("WARNING: SUBMISSION OVERLOAD. You have submitted 5 or more requests within a 2-minute window. Please pause and allow the Compliance Officer to finish reading the existing printouts.");
+      emit(EVENTS.PLAY_SOUND, { name: "chord" });
+      return;
+    }
+
     setRetoneLoading(true);
     setRetoneError(null);
     emit(EVENTS.LOADING_START, { kind: "retone" });
@@ -188,13 +204,19 @@ export default function EmailReview({ isActive }) {
       </div>
 
       <div className="field-row-stacked co-grow-row" style={{ width: "100%", marginTop: 6 }}>
-        <label htmlFor="co-email-msg">Email body:</label>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <label htmlFor="co-email-msg">Email body:</label>
+          <span style={{ fontSize: 11, color: body.length > 500 ? "red" : "#555" }}>
+            {body.length} / 500
+          </span>
+        </div>
         <textarea
           id="co-email-msg"
           name="co-msg"
           rows={16}
           value={body}
           onChange={handleTyping}
+          maxLength={500}
           placeholder="Paste the message you're worried about sending."
           disabled={loading}
           autoComplete="off"

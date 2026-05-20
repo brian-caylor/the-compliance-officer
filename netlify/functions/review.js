@@ -42,6 +42,92 @@ const handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: "Mode must be 'quick' or 'email'" }) };
   }
 
+  // Tier B Rate Limiting via Upstash Redis
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (redisUrl && redisToken) {
+    try {
+      const rawIp = event.headers["client-ip"] || event.headers["x-nf-client-connection-ip"] || "127.0.0.1";
+      const ip = rawIp.replace(/[^a-zA-Z0-9.:_-]/g, "");
+      
+      const today = new Date().toISOString().split("T")[0];
+      const ipKey = `ip_limit:${ip}`;
+      const globalKey = `global_daily_limit:${today}`;
+
+      const pipelineResponse = await fetch(`${redisUrl}/pipeline`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${redisToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify([
+          ["INCR", ipKey],
+          ["TTL", ipKey],
+          ["INCR", globalKey],
+          ["TTL", globalKey],
+        ]),
+      });
+
+      if (pipelineResponse.ok) {
+        const pipelineData = await pipelineResponse.json();
+        if (Array.isArray(pipelineData) && pipelineData.length === 4) {
+          const ipCount = pipelineData[0]?.result;
+          const ipTtl = pipelineData[1]?.result;
+          const globalCount = pipelineData[2]?.result;
+          const globalTtl = pipelineData[3]?.result;
+
+          // Set expirations in the background if they don't exist
+          const expireCommands = [];
+          if (ipTtl === -1 || ipCount === 1) {
+            expireCommands.push(["EXPIRE", ipKey, 3600]);
+          }
+          if (globalTtl === -1 || globalCount === 1) {
+            expireCommands.push(["EXPIRE", globalKey, 100000]); // slightly over 24h
+          }
+
+          if (expireCommands.length > 0) {
+            fetch(`${redisUrl}/pipeline`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${redisToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(expireCommands),
+            }).catch((err) => console.error("Error setting Upstash expirations in background:", err));
+          }
+
+          // Check limits
+          if (ipCount > 15) {
+            return {
+              statusCode: 429,
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                error: "INSUFFICIENT COMPLIANCE BANDWIDTH",
+                details: "Our records indicate that you have requested 15 policy evaluations within the last sixty minutes. Please step away from the desk, consume a lukewarm beverage, and refrain from further communication until your hourly compliance allocation has replenished.",
+              }),
+            };
+          }
+
+          if (globalCount > 250) {
+            return {
+              statusCode: 429,
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                error: "RESOURCE DEPLETION EVENT",
+                details: "The global daily compliance quota of 250 reviews has been fully exhausted. The Compliance Officer is currently filling out Form 99-B (Record of Excessive Advisory Requests) and cannot be disturbed. Please submit your inquiries during the next business day.",
+              }),
+            };
+          }
+        }
+      } else {
+        console.error("Upstash Redis pipeline failed with status:", pipelineResponse.status);
+      }
+    } catch (redisError) {
+      console.error("Upstash Redis error (failing open):", redisError);
+    }
+  }
+
   const basePrompt = mode === "email" ? EMAIL_REVIEW_PROMPT : QUICK_TRANSLATE_PROMPT;
   const systemPrompt = buildSystemPrompt(basePrompt, tone);
 

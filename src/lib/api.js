@@ -1,3 +1,30 @@
+export function checkClientRateLimit() {
+  const now = Date.now();
+  let submissions = [];
+  try {
+    submissions = JSON.parse(localStorage.getItem("co_submissions") || "[]");
+  } catch (e) {
+    submissions = [];
+  }
+
+  // Filter timestamps in the last 120 seconds (2 minutes)
+  submissions = submissions.filter(
+    (t) => typeof t === "number" && now - t < 120000
+  );
+
+  if (submissions.length >= 5) {
+    return { allowed: false };
+  }
+
+  submissions.push(now);
+  try {
+    localStorage.setItem("co_submissions", JSON.stringify(submissions));
+  } catch (e) {
+    // Ignore localStorage storage errors
+  }
+  return { allowed: true };
+}
+
 export async function apiReview({ mode, message, subject, tone }) {
   let res;
   try {
