@@ -72,6 +72,7 @@ function layoutFor(curSize) {
 }
 
 export default function App() {
+  const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState("quick");
   const [statusMsg] = useState(
     () => STATUS_MESSAGES[Math.floor(Math.random() * STATUS_MESSAGES.length)]
@@ -107,6 +108,8 @@ export default function App() {
   // User's manual width preference (up to DEFAULT_W) is preserved when room allows.
   useEffect(() => {
     const onResize = () => {
+      const mobile = window.innerWidth < 480;
+      setIsMobile(mobile);
       const next = layoutFor(sizeRef.current);
       sizeRef.current = next.size;
       setSize(next.size);
@@ -296,11 +299,13 @@ export default function App() {
   };
 
   const tabs = [
-    { key: "quick", label: "Quick Translate" },
-    { key: "email", label: "Email Review" },
+    { key: "quick", label: isMobile ? "Translate" : "Quick Translate" },
+    { key: "email", label: isMobile ? "Review" : "Email Review" },
     {
       key: "shame",
-      label: `Hall of Shame${shameCount > 0 ? ` (${shameCount})` : ""}`,
+      label: isMobile
+        ? `Shame${shameCount > 0 ? ` (${shameCount})` : ""}`
+        : `Hall of Shame${shameCount > 0 ? ` (${shameCount})` : ""}`,
     },
   ];
 
@@ -623,7 +628,7 @@ export default function App() {
           style={{ cursor: "move" }}
         >
           <div className="title-bar-text">
-            ⚖ Compliance Officer v3.11 — [Untitled Review]
+            {isMobile ? "⚖ Compliance Officer" : "⚖ Compliance Officer v3.11 — [Untitled Review]"}
           </div>
           <div className="title-bar-controls">
             <button
@@ -714,9 +719,9 @@ export default function App() {
 
         <div className="status-bar">
           <p className="status-bar-field">Ready.</p>
-          <p className="status-bar-field">{statusMsg}</p>
-          <p className="status-bar-field">CAPS</p>
-          <p className="status-bar-field">NUM</p>
+          {!isMobile && <p className="status-bar-field">{statusMsg}</p>}
+          {!isMobile && <p className="status-bar-field">CAPS</p>}
+          {!isMobile && <p className="status-bar-field">NUM</p>}
           <p className="status-bar-field">{time}</p>
         </div>
 

@@ -38,9 +38,10 @@ body {
   position: absolute;
   display: flex;
   flex-direction: column;
-  min-width: 520px;
-  min-height: 360px;
+  min-width: 240px;
+  min-height: 240px;
   box-shadow: 1px 1px 0 #000;
+  z-index: 10;
 }
 .app-window > .title-bar {
   user-select: none;
@@ -557,11 +558,12 @@ body {
   justify-content: center;
 }
 .win95-dialog {
-  min-width: 320px;
-  max-width: 440px;
+  min-width: 280px;
+  max-width: 92vw;
   box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
+  z-index: 30;
 }
 .dialog-content-layout {
   display: flex;
@@ -714,7 +716,9 @@ body {
 .modal-window {
   position: absolute;
   box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
-  min-width: 320px;
+  min-width: 280px;
+  max-width: 94vw !important;
+  z-index: 20;
 }
 .synergizer-box {
   background: #ffffff;
@@ -885,4 +889,61 @@ body {
 }
 
 
-
+/* ==========================================
+   Mobile-First Responsive Adjustments (<480px)
+   ========================================== */
+@media (max-width: 480px) {
+  .menubar {
+    gap: 8px !important;
+  }
+  .menubar li {
+    padding: 2px 3px;
+    font-size: 12px;
+  }
+  .tutorial-body {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  .tutorial-image {
+    flex: 0 0 120px !important;
+    height: 120px !important;
+    width: 100% !important;
+  }
+  .tractor-paper-container {
+    padding: 6px 12px !important;
+  }
+  .tractor-paper {
+    border-left: 6px solid #eaeaea !important;
+    border-right: 6px solid #eaeaea !important;
+    padding: 16px 8px !important;
+    font-size: 11px !important;
+  }
+  .tractor-paper::before,
+  .tractor-paper::after {
+    width: 6px !important;
+    background-size: 6px 20px !important;
+  }
+  .tractor-paper::before {
+    left: -6px !important;
+  }
+  .tractor-paper::after {
+    right: -6px !important;
+  }
+  
+  /* Form responsiveness wrapping classes */
+  .field-row-responsive {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  .field-row-responsive > select {
+    flex-grow: 1 !important;
+    min-width: 120px !important;
+  }
+  .field-row-responsive > .spacer {
+    display: none !important;
+  }
+  .field-row-responsive > button {
+    width: 100% !important;
+    margin-top: 4px;
+  }
+}

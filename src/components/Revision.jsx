@@ -58,7 +58,7 @@ export default function Revision({
       <legend>✉ Recommended Revision</legend>
 
       <div
-        className="field-row"
+        className="field-row field-row-responsive"
         style={{ alignItems: "center", gap: 6, marginBottom: 6 }}
       >
         <button type="button" onClick={onPrev} disabled={atFirst || busy}>
@@ -73,7 +73,7 @@ export default function Revision({
         </span>
         {totalVersions > 1 && (
           <>
-            <div style={{ flex: 1 }} />
+            <div className="spacer" style={{ flex: 1 }} />
             <label htmlFor="version-select" style={{ fontSize: 13 }}>
               Jump to:
             </label>

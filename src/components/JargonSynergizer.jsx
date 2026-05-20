@@ -46,6 +46,7 @@ function generateJargon() {
 
 export default function JargonSynergizer({ onClose }) {
   const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [width, setWidth] = useState(400);
   const [isCentered, setIsCentered] = useState(true);
   const [jargon, setJargon] = useState("");
   const [copied, setCopied] = useState(false);
@@ -54,10 +55,11 @@ export default function JargonSynergizer({ onClose }) {
   // Generate initial jargon and center on mount
   useEffect(() => {
     setJargon(generateJargon());
-    const w = 400;
+    const w = Math.min(400, window.innerWidth - 16);
+    setWidth(w);
     const h = 240;
-    const x = Math.max(20, Math.floor((window.innerWidth - w) / 2));
-    const y = Math.max(20, Math.floor((window.innerHeight - h) / 2));
+    const x = Math.max(8, Math.floor((window.innerWidth - w) / 2));
+    const y = Math.max(8, Math.floor((window.innerHeight - h) / 2));
     setPos({ x, y });
     setIsCentered(false);
     emit(EVENTS.PLAY_SOUND, { name: "chimes" });
@@ -141,7 +143,7 @@ export default function JargonSynergizer({ onClose }) {
         style={{
           left: pos.x,
           top: pos.y,
-          width: 400,
+          width: width,
           opacity: isCentered ? 0 : 1,
           visibility: isCentered ? "hidden" : "visible",
           transition: "opacity 0.05s ease-out",

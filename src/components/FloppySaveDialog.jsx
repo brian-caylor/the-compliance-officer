@@ -80,12 +80,14 @@ export default function FloppySaveDialog({ reportData, onClose }) {
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [isCentered, setIsCentered] = useState(true);
   const dragStateRef = useRef(null);
+  const [width, setWidth] = useState(380);
 
   useEffect(() => {
-    const w = 380;
+    const w = Math.min(380, window.innerWidth - 16);
+    setWidth(w);
     const h = 200;
-    const x = Math.max(10, Math.floor((window.innerWidth - w) / 2));
-    const y = Math.max(10, Math.floor((window.innerHeight - h) / 2));
+    const x = Math.max(8, Math.floor((window.innerWidth - w) / 2));
+    const y = Math.max(8, Math.floor((window.innerHeight - h) / 2));
     setPos({ x, y });
     setIsCentered(false);
   }, []);
@@ -176,7 +178,7 @@ export default function FloppySaveDialog({ reportData, onClose }) {
         style={{
           left: pos.x,
           top: pos.y,
-          width: 380,
+          width: width,
           opacity: isCentered ? 0 : 1,
           visibility: isCentered ? "hidden" : "visible",
           transition: "opacity 0.05s ease-out",

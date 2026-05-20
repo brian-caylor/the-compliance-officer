@@ -2,15 +2,17 @@ import { useState, useEffect, useRef } from "react";
 
 export default function PrintPreviewDialog({ reportData, onClose }) {
   const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [width, setWidth] = useState(550);
   const [isCentered, setIsCentered] = useState(true);
   const dragStateRef = useRef(null);
 
   // Center the window on mount
   useEffect(() => {
-    const w = 550;
+    const w = Math.min(550, window.innerWidth - 16);
+    setWidth(w);
     const h = 480;
-    const x = Math.max(10, Math.floor((window.innerWidth - w) / 2));
-    const y = Math.max(10, Math.floor((window.innerHeight - h) / 2));
+    const x = Math.max(8, Math.floor((window.innerWidth - w) / 2));
+    const y = Math.max(8, Math.floor((window.innerHeight - h) / 2));
     setPos({ x, y });
     setIsCentered(false);
   }, []);
@@ -82,7 +84,7 @@ export default function PrintPreviewDialog({ reportData, onClose }) {
         style={{
           left: pos.x,
           top: pos.y,
-          width: 550,
+          width: width,
           opacity: isCentered ? 0 : 1,
           visibility: isCentered ? "hidden" : "visible",
           transition: "opacity 0.05s ease-out",

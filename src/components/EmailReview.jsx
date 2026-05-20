@@ -229,7 +229,7 @@ export default function EmailReview({ isActive }) {
         />
       </div>
 
-      <div className="field-row" style={{ marginTop: 6, alignItems: "center", gap: 6 }}>
+      <div className="field-row field-row-responsive" style={{ marginTop: 6, alignItems: "center", gap: 6 }}>
         <label htmlFor="co-email-tone" style={{ fontSize: 13 }}>Target tone:</label>
         <select
           id="co-email-tone"
@@ -242,7 +242,7 @@ export default function EmailReview({ isActive }) {
             <option key={t.key} value={t.key}>{t.label}</option>
           ))}
         </select>
-        <div style={{ flex: 1 }} />
+        <div className="spacer" style={{ flex: 1 }} />
         <button
           type="button"
           onClick={() => runFresh()}

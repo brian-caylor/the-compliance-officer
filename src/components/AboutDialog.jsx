@@ -2,15 +2,17 @@ import { useState, useRef, useEffect } from "react";
 
 export default function AboutDialog({ onClose }) {
   const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [width, setWidth] = useState(360);
   const [isCentered, setIsCentered] = useState(true);
   const dragStateRef = useRef(null);
 
   // Center the window on mount
   useEffect(() => {
-    const w = 360;
+    const w = Math.min(360, window.innerWidth - 16);
+    setWidth(w);
     const h = 330;
-    const x = Math.max(20, Math.floor((window.innerWidth - w) / 2));
-    const y = Math.max(20, Math.floor((window.innerHeight - h) / 2));
+    const x = Math.max(8, Math.floor((window.innerWidth - w) / 2));
+    const y = Math.max(8, Math.floor((window.innerHeight - h) / 2));
     setPos({ x, y });
     setIsCentered(false);
   }, []);
@@ -66,7 +68,7 @@ export default function AboutDialog({ onClose }) {
         style={{
           left: pos.x,
           top: pos.y,
-          width: 360,
+          width: width,
           opacity: isCentered ? 0 : 1,
           visibility: isCentered ? "hidden" : "visible",
           transition: "opacity 0.05s ease-out",
