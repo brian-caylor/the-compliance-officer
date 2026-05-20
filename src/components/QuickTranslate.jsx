@@ -78,7 +78,7 @@ export default function QuickTranslate({ isActive }) {
     }
 
     const currentText = getMessage();
-    if (currentText.length >= 500) {
+    if (currentText.length >= 2500) {
       const selection = window.getSelection();
       if (selection && selection.toString().length > 0) {
         return;
@@ -89,8 +89,8 @@ export default function QuickTranslate({ isActive }) {
 
   const handleInput = () => {
     let v = getMessage();
-    if (v.length > 500) {
-      v = v.slice(0, 500);
+    if (v.length > 2500) {
+      v = v.slice(0, 2500);
       if (editorRef.current) {
         editorRef.current.innerText = v;
       }
@@ -106,7 +106,7 @@ export default function QuickTranslate({ isActive }) {
     const currentText = getMessage();
     const selection = window.getSelection();
     const selectionLength = selection ? selection.toString().length : 0;
-    const availableSpace = 500 - (currentText.length - selectionLength);
+    const availableSpace = 2500 - (currentText.length - selectionLength);
     
     if (availableSpace <= 0) {
       return;
@@ -179,8 +179,8 @@ export default function QuickTranslate({ isActive }) {
           <label htmlFor="co-quick-editor">
             Enter your unfiltered workplace thought for HR-approved translation:
           </label>
-          <span style={{ fontSize: 11, color: charCount > 500 ? "red" : "#555" }}>
-            {charCount} / 500
+          <span style={{ fontSize: 11, color: charCount > 2500 ? "red" : "#555" }}>
+            {charCount} / 2500
           </span>
         </div>
         <div

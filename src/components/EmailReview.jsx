@@ -206,8 +206,8 @@ export default function EmailReview({ isActive }) {
       <div className="field-row-stacked co-grow-row" style={{ width: "100%", marginTop: 6 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <label htmlFor="co-email-msg">Email body:</label>
-          <span style={{ fontSize: 11, color: body.length > 500 ? "red" : "#555" }}>
-            {body.length} / 500
+          <span style={{ fontSize: 11, color: body.length > 2500 ? "red" : "#555" }}>
+            {body.length} / 2500
           </span>
         </div>
         <textarea
@@ -216,7 +216,7 @@ export default function EmailReview({ isActive }) {
           rows={16}
           value={body}
           onChange={handleTyping}
-          maxLength={500}
+          maxLength={2500}
           placeholder="Paste the message you're worried about sending."
           disabled={loading}
           autoComplete="off"
