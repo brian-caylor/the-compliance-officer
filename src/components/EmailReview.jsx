@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { apiReview } from "../lib/api.js";
 import { TONES, DEFAULT_TONE } from "../lib/tones.js";
 import { addEntry } from "../lib/hallOfShame.js";
-import { emit, EVENTS } from "../lib/bus.js";
+import { emit, on, EVENTS } from "../lib/bus.js";
 import Assessment from "./Assessment.jsx";
 import Revision from "./Revision.jsx";
 
@@ -16,7 +16,7 @@ function makeVersion(tone, data) {
   };
 }
 
-export default function EmailReview() {
+export default function EmailReview({ isActive }) {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [tone, setTone] = useState(DEFAULT_TONE);
@@ -30,6 +30,54 @@ export default function EmailReview() {
   const [assessmentResult, setAssessmentResult] = useState(null);
   const [versions, setVersions] = useState([]);
   const [versionIndex, setVersionIndex] = useState(0);
+
+  const currentVersion = versions[versionIndex] || null;
+
+  useEffect(() => {
+    if (!isActive) return;
+
+    const handleCopyText = async (text) => {
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand("copy");
+        } finally {
+          document.body.removeChild(ta);
+        }
+      }
+    };
+
+    const unsubscribeClear = on(EVENTS.CLEAR_TEXT, (e) => {
+      const scope = e.detail?.scope || "all";
+      setBody("");
+      emit(EVENTS.TYPING, { text: "" });
+      if (scope === "all") {
+        setSubject("");
+        setAssessmentResult(null);
+        setVersions([]);
+        setVersionIndex(0);
+        setError(null);
+        setRetoneError(null);
+      }
+    });
+
+    const unsubscribeCopy = on(EVENTS.COPY_TEXT, () => {
+      if (currentVersion && currentVersion.revision) {
+        handleCopyText(currentVersion.revision);
+      }
+    });
+
+    return () => {
+      unsubscribeClear();
+      unsubscribeCopy();
+    };
+  }, [isActive, currentVersion]);
 
   const runFresh = async () => {
     if (!body.trim() || loading || retoneLoading) return;
@@ -49,9 +97,22 @@ export default function EmailReview() {
       setVersions(v);
       setVersionIndex(0);
       addEntry({ mode: "email", original: body, result: data, tone });
-      emit(EVENTS.SUBMISSION, { mode: "email", result: data });
+      emit(EVENTS.SUBMISSION, {
+        mode: "email",
+        original: body,
+        subject: subject.trim() || undefined,
+        tone: tone,
+        result: data,
+      });
+
+      if (data.safety_override || data.danger_level >= 4) {
+        emit(EVENTS.PLAY_SOUND, { name: "chord" });
+      } else {
+        emit(EVENTS.PLAY_SOUND, { name: "tada" });
+      }
     } catch (err) {
       setError(err.message);
+      emit(EVENTS.PLAY_SOUND, { name: "chord" });
     } finally {
       setLoading(false);
       emit(EVENTS.LOADING_END);
@@ -74,6 +135,7 @@ export default function EmailReview() {
       if (data.safety_override) {
         // unlikely on same input, but bail safely
         setRetoneError("The Compliance Officer declined to re-tone this message.");
+        emit(EVENTS.PLAY_SOUND, { name: "chord" });
         return;
       }
       const v = makeVersion(newToneKey, data);
@@ -83,8 +145,10 @@ export default function EmailReview() {
         return next;
       });
       setTone(newToneKey);
+      emit(EVENTS.PLAY_SOUND, { name: "tada" });
     } catch (err) {
       setRetoneError(err.message);
+      emit(EVENTS.PLAY_SOUND, { name: "chord" });
     } finally {
       setRetoneLoading(false);
       emit(EVENTS.LOADING_END);
@@ -101,8 +165,6 @@ export default function EmailReview() {
   const goNext = () =>
     setVersionIndex((i) => Math.min(versions.length - 1, i + 1));
   const goTo = (i) => setVersionIndex(Math.max(0, Math.min(versions.length - 1, i)));
-
-  const currentVersion = versions[versionIndex] || null;
 
   return (
     <div className="co-form" role="group" aria-label="Email Review">

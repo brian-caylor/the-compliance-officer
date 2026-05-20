@@ -1,20 +1,64 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { apiReview } from "../lib/api.js";
 import { TONES, DEFAULT_TONE } from "../lib/tones.js";
 import { addEntry } from "../lib/hallOfShame.js";
-import { emit, EVENTS } from "../lib/bus.js";
+import { emit, on, EVENTS } from "../lib/bus.js";
 import Assessment from "./Assessment.jsx";
 
 const PLACEHOLDER =
   "e.g., This deadline is ridiculous and whoever set it has clearly never written a line of code.";
 
-export default function QuickTranslate() {
+export default function QuickTranslate({ isActive }) {
   const editorRef = useRef(null);
   const [hasText, setHasText] = useState(false);
   const [tone, setTone] = useState(DEFAULT_TONE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
+
+  useEffect(() => {
+    if (!isActive) return;
+
+    const handleCopyText = async (text) => {
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand("copy");
+        } finally {
+          document.body.removeChild(ta);
+        }
+      }
+    };
+
+    const unsubscribeClear = on(EVENTS.CLEAR_TEXT, (e) => {
+      const scope = e.detail?.scope || "all";
+      if (editorRef.current) {
+        editorRef.current.innerText = "";
+      }
+      setHasText(false);
+      if (scope === "all") {
+        setResult(null);
+        setError(null);
+      }
+    });
+
+    const unsubscribeCopy = on(EVENTS.COPY_TEXT, () => {
+      if (result && result.sanitized_translation) {
+        handleCopyText(result.sanitized_translation);
+      }
+    });
+
+    return () => {
+      unsubscribeClear();
+      unsubscribeCopy();
+    };
+  }, [isActive, result]);
 
   const getMessage = () =>
     (editorRef.current?.innerText || "").replace(/ /g, " ");
@@ -57,9 +101,21 @@ export default function QuickTranslate() {
       });
       setResult(data);
       addEntry({ mode: "quick", original: message, result: data, tone: effectiveTone });
-      emit(EVENTS.SUBMISSION, { mode: "quick", result: data });
+      emit(EVENTS.SUBMISSION, {
+        mode: "quick",
+        original: message,
+        tone: effectiveTone,
+        result: data,
+      });
+
+      if (data.safety_override || data.danger_level >= 4) {
+        emit(EVENTS.PLAY_SOUND, { name: "chord" });
+      } else {
+        emit(EVENTS.PLAY_SOUND, { name: "tada" });
+      }
     } catch (err) {
       setError(err.message);
+      emit(EVENTS.PLAY_SOUND, { name: "chord" });
     } finally {
       setLoading(false);
       emit(EVENTS.LOADING_END);

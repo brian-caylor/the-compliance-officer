@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { getEntries, removeEntry, clearAll } from "../lib/hallOfShame.js";
 import { getDangerEntry } from "../lib/dangerScale.js";
 import { TONES } from "../lib/tones.js";
-import { on, EVENTS } from "../lib/bus.js";
+import { on, emit, EVENTS } from "../lib/bus.js";
 
 function toneLabel(key) {
   const t = TONES.find((x) => x.key === key);
@@ -27,9 +27,13 @@ export default function HallOfShame() {
 
   const handleClear = () => {
     if (entries.length === 0) return;
-    if (confirm(`Permanently expunge all ${entries.length} record(s) from the Hall of Shame?\n\n(This action cannot be undone. We have a strict no-shredder policy.)`)) {
-      clearAll();
-    }
+    emit(EVENTS.SHOW_DIALOG, {
+      title: "Expunge Permanent Records",
+      message: `Permanently expunge all ${entries.length} record(s) from the Hall of Shame?\n\n(This action cannot be undone. We have a strict no-shredder policy.)`,
+      type: "confirm",
+      onConfirm: () => clearAll(),
+      onCancel: () => {},
+    });
   };
 
   return (

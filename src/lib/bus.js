@@ -18,4 +18,8 @@ export const EVENTS = {
   LOADING_START: "co:loading-start",
   LOADING_END: "co:loading-end",
   SHOW_TUTORIAL: "co:show-tutorial",
+  SHOW_DIALOG: "co:show-dialog",
+  CLEAR_TEXT: "co:clear-text",
+  COPY_TEXT: "co:copy-text",
+  PLAY_SOUND: "co:play-sound",
 };

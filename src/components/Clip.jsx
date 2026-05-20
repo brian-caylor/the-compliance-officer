@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { on, EVENTS } from "../lib/bus.js";
+import { on, emit, EVENTS } from "../lib/bus.js";
 import {
   INTRO_HINTS,
   IDLE_HINTS,
@@ -41,6 +41,7 @@ export default function Clip() {
     if (!canShow()) return;
     setMessage(text);
     setHidden(false);
+    emit(EVENTS.PLAY_SOUND, { name: "ding" });
   };
 
   // intro after a short delay

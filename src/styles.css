@@ -545,3 +545,334 @@ body {
 @keyframes blink {
   50% { opacity: 0; }
 }
+
+/* Win95 Dialog Modal Styles */
+.win95-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 9700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.win95-dialog {
+  min-width: 320px;
+  max-width: 440px;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+}
+.dialog-content-layout {
+  display: flex;
+  gap: 14px;
+  padding: 12px 12px 4px 12px;
+  align-items: flex-start;
+}
+.dialog-icon-cell {
+  flex: 0 0 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dialog-text-cell {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #000000;
+}
+.dialog-action-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-bottom: 4px;
+}
+.dialog-button {
+  min-width: 75px;
+}
+
+/* Menu Dropdown Styles */
+.menubar {
+  position: relative; /* Anchor for absolute dropdown positioning */
+}
+.menubar li {
+  position: relative; /* Anchor for nested dropdown alignment */
+}
+.menu-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #808080;
+  border-bottom: 1px solid #808080;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+  min-width: 200px;
+  z-index: 9100;
+  padding: 2px;
+}
+.menu-dropdown-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.menu-dropdown-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 12px;
+  font-size: 13px;
+  color: #000000;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.menu-dropdown-item:hover {
+  background: #000080;
+  color: #ffffff;
+}
+.menu-dropdown-item.disabled {
+  color: #808080;
+  text-shadow: 1px 1px 0 #ffffff;
+  pointer-events: none;
+}
+.menu-dropdown-separator {
+  height: 0;
+  border-top: 1px solid #808080;
+  border-bottom: 1px solid #ffffff;
+  margin: 4px 2px;
+}
+.menu-dropdown-shortcut {
+  margin-left: 24px;
+  font-size: 12px;
+  color: inherit;
+}
+.menu-dropdown-check {
+  display: inline-block;
+  width: 12px;
+  font-weight: bold;
+  margin-right: 6px;
+}
+
+/* Teal Desktop & Shortcut Icon Styles */
+.desktop {
+  width: 100vw;
+  height: 100vh;
+  box-sizing: border-box;
+}
+.desktop-icons {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  z-index: 1;
+}
+.desktop-icon {
+  width: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+}
+.desktop-icon-glyph {
+  font-size: 32px;
+  margin-bottom: 4px;
+  filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.5));
+}
+.desktop-icon-text {
+  font-size: 12px;
+  color: #ffffff;
+  text-shadow: 1px 1px 1px #000000;
+  padding: 2px 4px;
+  border: 1px dotted transparent;
+  text-align: center;
+  line-height: 1.2;
+}
+.desktop-icon.selected .desktop-icon-text {
+  background: #000080;
+  border: 1px dotted #ffffff;
+}
+
+/* Floating Retro Modals / Secondary Windows */
+.modal-window-backdrop {
+  position: fixed;
+  inset: 0;
+  background: transparent; /* Clickable overlay, closing popup */
+  z-index: 9400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-window {
+  position: absolute;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+  min-width: 320px;
+}
+.synergizer-box {
+  background: #ffffff;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  padding: 10px;
+  font-family: "Lucida Console", "Courier New", monospace;
+  font-size: 13px;
+  min-height: 56px;
+  color: #000080;
+  margin-bottom: 10px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+/* Continuous Tractor-Feed Paper Styling */
+.tractor-paper-container {
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 10px 24px;
+  background: #505050;
+  border: 2px inset #ffffff;
+  box-sizing: border-box;
+}
+
+.tractor-paper {
+  position: relative;
+  background-color: #ffffff;
+  background-image: repeating-linear-gradient(#f0fff0, #f0fff0 24px, #ffffff 24px, #ffffff 48px);
+  border-left: 20px solid #eaeaea;
+  border-right: 20px solid #eaeaea;
+  box-shadow: inset 1px 0 0 #d0d0d0, inset -1px 0 0 #d0d0d0, 4px 4px 12px rgba(0, 0, 0, 0.4);
+  font-family: "Courier New", Courier, monospace;
+  font-size: 12px;
+  line-height: 24px; /* Aligns characters perfectly to 24px stripes */
+  color: #003300;
+  padding: 24px 16px;
+  box-sizing: border-box;
+  user-select: text;
+  min-height: 320px;
+}
+
+.tractor-paper::before,
+.tractor-paper::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  background-image: repeating-radial-gradient(circle, #444444 0, #444444 3px, transparent 4px, transparent 20px);
+  background-size: 20px 20px;
+  z-index: 1;
+}
+
+.tractor-paper::before {
+  left: -20px;
+  border-right: 1px dashed #808080;
+}
+
+.tractor-paper::after {
+  right: -20px;
+  border-left: 1px dashed #808080;
+}
+
+.tractor-paper-header {
+  border-bottom: 2px dashed #003300;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.tractor-paper-section {
+  margin-bottom: 16px;
+}
+
+.tractor-paper-section-title {
+  font-weight: bold;
+  border-bottom: 1px solid #003300;
+  margin-bottom: 4px;
+}
+
+.tractor-paper-footer {
+  border-top: 2px dashed #003300;
+  padding-top: 12px;
+  margin-top: 24px;
+  text-align: center;
+  font-size: 11px;
+}
+
+/* Print Spooler Page Layout (Screensize Hidden) */
+.printable-tractor-paper {
+  display: none;
+}
+
+/* @media print Rules for System Printing */
+@media print {
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Hide everything inside the body */
+  body > * {
+    display: none !important;
+  }
+
+  /* Force display of only the printable continuous paper */
+  .printable-tractor-paper {
+    display: block !important;
+    position: absolute !important;
+    left: 4% !important;
+    top: 40px !important;
+    width: 92% !important;
+    height: auto !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 24px 16px !important;
+    background-color: #ffffff !important;
+    background-image: repeating-linear-gradient(#f0fff0, #f0fff0 24px, #ffffff 24px, #ffffff 48px) !important;
+    border-left: 24px solid #eaeaea !important;
+    border-right: 24px solid #eaeaea !important;
+    font-family: "Courier New", Courier, monospace !important;
+    font-size: 13px !important;
+    line-height: 24px !important;
+    color: #003300 !important;
+    box-sizing: border-box !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .printable-tractor-paper::before,
+  .printable-tractor-paper::after {
+    content: "" !important;
+    position: absolute !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    width: 24px !important;
+    background-image: repeating-radial-gradient(circle, #333333 0, #333333 4px, transparent 5px, transparent 20px) !important;
+    background-size: 24px 20px !important;
+    z-index: 1 !important;
+  }
+
+  .printable-tractor-paper::before {
+    left: -24px !important;
+    border-right: 1px dashed #808080 !important;
+  }
+
+  .printable-tractor-paper::after {
+    right: -24px !important;
+    border-left: 1px dashed #808080 !important;
+  }
+}
+
+
+

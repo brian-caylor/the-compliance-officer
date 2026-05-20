@@ -1,7 +1,7 @@
 export async function apiReview({ mode, message, subject, tone }) {
   let res;
   try {
-    res = await fetch("/.netlify/functions/review", {
+    res = await fetch("/api/review", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mode, message, subject, tone }),
