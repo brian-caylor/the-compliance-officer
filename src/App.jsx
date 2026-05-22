@@ -13,6 +13,7 @@ import AboutDialog from "./components/AboutDialog.jsx";
 import JargonSynergizer from "./components/JargonSynergizer.jsx";
 import FloppySaveDialog from "./components/FloppySaveDialog.jsx";
 import PrintPreviewDialog from "./components/PrintPreviewDialog.jsx";
+import FeedbackDialog from "./components/FeedbackDialog.jsx";
 import { STATUS_MESSAGES } from "./lib/statusMessages.js";
 import { on, emit, EVENTS } from "./lib/bus.js";
 import { getEntries } from "./lib/hallOfShame.js";
@@ -94,6 +95,7 @@ export default function App() {
   const [lastSubmission, setLastSubmission] = useState(null);
   const [showFloppySave, setShowFloppySave] = useState(false);
   const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   const initial = layoutFor({ w: DEFAULT_W, h: DEFAULT_H });
   const [pos, setPos] = useState(initial.pos);
@@ -550,6 +552,16 @@ export default function App() {
               <div
                 className="menu-dropdown-item"
                 onClick={() => {
+                  setShowFeedback(true);
+                  setActiveMenu(null);
+                }}
+              >
+                <span>Submit feedback / Grievance</span>
+              </div>
+              <hr />
+              <div
+                className="menu-dropdown-item"
+                onClick={() => {
                   setShowAbout(true);
                   setActiveMenu(null);
                 }}
@@ -740,6 +752,12 @@ export default function App() {
       {dialog && <Win95Dialog {...dialog} />}
       {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
       {showSynergizer && <JargonSynergizer onClose={() => setShowSynergizer(false)} />}
+      {showFeedback && (
+        <FeedbackDialog
+          onClose={() => setShowFeedback(false)}
+          isGlobalMuted={isMuted}
+        />
+      )}
       {showFloppySave && lastSubmission && (
         <FloppySaveDialog
           reportData={lastSubmission}

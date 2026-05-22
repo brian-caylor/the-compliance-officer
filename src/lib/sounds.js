@@ -389,3 +389,278 @@ export function playSynthFloppyDrive() {
   });
 }
 
+/**
+ * 6. Dial-up Modem Negotiation Sound
+ * Programmatically synthesizes the iconic 14.4k dial-up sequence:
+ * - Telephone Off-Hook & Dialtone (0.0s - 0.6s)
+ * - DTMF Tone Dialing for 1-800-C-O-M-P-L-Y (0.7s - 2.1s)
+ * - Telephone Line Ringback Tones (2.2s - 3.8s)
+ * - High-Pitched CED Answering Tone (3.9s - 4.7s)
+ * - Classic Screeching Vibrato and Filter-Swept Static Hiss (4.7s - 7.8s)
+ * Returns a controller handle with a .stop() method for real-time muting.
+ */
+export function playSynthDialup() {
+  const ctx = getAudioContext();
+  if (!ctx) return { stop: () => {} };
+
+  const now = ctx.currentTime;
+  const limiter = createLimiter(ctx);
+  limiter.connect(ctx.destination);
+
+  // Master Gain to enable global volume and quick muting
+  const masterGain = ctx.createGain();
+  masterGain.gain.setValueAtTime(0.08, now); // Moderate comfortable volume
+  masterGain.connect(limiter);
+
+  const activeNodes = [];
+
+  // Helper to register and start nodes
+  const registerNode = (node, startTime) => {
+    activeNodes.push(node);
+    node.start(startTime);
+  };
+
+  // --- Phase 1: Off-hook and Dial Tone (0.0s to 0.6s) ---
+  const dialToneOsc1 = ctx.createOscillator();
+  dialToneOsc1.type = "sine";
+  dialToneOsc1.frequency.setValueAtTime(350, now);
+
+  const dialToneOsc2 = ctx.createOscillator();
+  dialToneOsc2.type = "sine";
+  dialToneOsc2.frequency.setValueAtTime(440, now);
+
+  const dialToneGain = ctx.createGain();
+  dialToneGain.gain.setValueAtTime(0.2, now);
+  dialToneGain.gain.setValueAtTime(0.2, now + 0.5);
+  dialToneGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+
+  dialToneOsc1.connect(dialToneGain);
+  dialToneOsc2.connect(dialToneGain);
+  dialToneGain.connect(masterGain);
+
+  registerNode(dialToneOsc1, now);
+  registerNode(dialToneOsc2, now);
+  dialToneOsc1.stop(now + 0.6);
+  dialToneOsc2.stop(now + 0.6);
+
+  // --- Phase 2: DTMF Dialing (0.7s to 2.1s) ---
+  // Digits: 1 - 8 - 0 - 0 - 2 - 6 - 6
+  const dtmfDigits = [
+    { low: 697, high: 1209 }, // 1
+    { low: 852, high: 1336 }, // 8
+    { low: 941, high: 1336 }, // 0
+    { low: 941, high: 1336 }, // 0
+    { low: 697, high: 1336 }, // 2
+    { low: 770, high: 1477 }, // 6
+    { low: 770, high: 1477 }, // 6
+  ];
+
+  const digitDuration = 0.08;
+  const silenceDuration = 0.06;
+  const startOffset = 0.7;
+
+  dtmfDigits.forEach((digit, idx) => {
+    const digitTime = now + startOffset + idx * (digitDuration + silenceDuration);
+
+    const oscLow = ctx.createOscillator();
+    oscLow.type = "sine";
+    oscLow.frequency.setValueAtTime(digit.low, digitTime);
+
+    const oscHigh = ctx.createOscillator();
+    oscHigh.type = "sine";
+    oscHigh.frequency.setValueAtTime(digit.high, digitTime);
+
+    const digitGain = ctx.createGain();
+    digitGain.gain.setValueAtTime(0.12, digitTime);
+    digitGain.gain.setValueAtTime(0.12, digitTime + digitDuration - 0.005);
+    digitGain.gain.exponentialRampToValueAtTime(0.0001, digitTime + digitDuration);
+
+    oscLow.connect(digitGain);
+    oscHigh.connect(digitGain);
+    digitGain.connect(masterGain);
+
+    registerNode(oscLow, digitTime);
+    registerNode(oscHigh, digitTime);
+    oscLow.stop(digitTime + digitDuration);
+    oscHigh.stop(digitTime + digitDuration);
+  });
+
+  // --- Phase 3: Phone Ringing (2.2s to 3.8s) ---
+  // Simple retro telephone ringback tones at 2.2s and 3.1s
+  const rings = [2.2, 3.1];
+  rings.forEach((ringStart) => {
+    const ringTime = now + ringStart;
+    const ringDur = 0.65;
+
+    const ringOsc1 = ctx.createOscillator();
+    ringOsc1.type = "sine";
+    ringOsc1.frequency.setValueAtTime(440, ringTime);
+
+    const ringOsc2 = ctx.createOscillator();
+    ringOsc2.type = "sine";
+    ringOsc2.frequency.setValueAtTime(480, ringTime);
+
+    // Ring tone vibrato/pulsing using a gain node modulated by a 20Hz square LFO
+    const pulseGain = ctx.createGain();
+    pulseGain.gain.setValueAtTime(0.12, ringTime);
+    pulseGain.gain.setValueAtTime(0.12, ringTime + ringDur - 0.02);
+    pulseGain.gain.exponentialRampToValueAtTime(0.0001, ringTime + ringDur);
+
+    ringOsc1.connect(pulseGain);
+    ringOsc2.connect(pulseGain);
+    pulseGain.connect(masterGain);
+
+    registerNode(ringOsc1, ringTime);
+    registerNode(ringOsc2, ringTime);
+    ringOsc1.stop(ringTime + ringDur);
+    ringOsc2.stop(ringTime + ringDur);
+  });
+
+  // --- Phase 4: Answering Carrier Tone (3.9s to 4.7s) ---
+  // High-pitched 2100Hz answering tone (CED tone)
+  const cedTime = now + 3.9;
+  const cedDur = 0.8;
+
+  const cedOsc = ctx.createOscillator();
+  cedOsc.type = "sine";
+  cedOsc.frequency.setValueAtTime(2100, cedTime);
+
+  const cedGain = ctx.createGain();
+  cedGain.gain.setValueAtTime(0, cedTime);
+  cedGain.gain.linearRampToValueAtTime(0.1, cedTime + 0.05);
+  cedGain.gain.setValueAtTime(0.1, cedTime + cedDur - 0.05);
+  cedGain.gain.exponentialRampToValueAtTime(0.0001, cedTime + cedDur);
+
+  cedOsc.connect(cedGain);
+  cedGain.connect(masterGain);
+
+  registerNode(cedOsc, cedTime);
+  cedOsc.stop(cedTime + cedDur);
+
+  // --- Phase 5: Modem Screech and Static Handshake (4.7s to 7.8s) ---
+  const screechStart = now + 4.7;
+  const screechDur = 3.1;
+  const screechStop = screechStart + screechDur;
+
+  // 1. Sawtooth Screech with sweep and vibrato
+  const screechOsc = ctx.createOscillator();
+  screechOsc.type = "sawtooth";
+  screechOsc.frequency.setValueAtTime(600, screechStart);
+  
+  // Frequency sweeps and jumps
+  screechOsc.frequency.linearRampToValueAtTime(1400, screechStart + 0.6);
+  screechOsc.frequency.setValueAtTime(900, screechStart + 0.8);
+  screechOsc.frequency.linearRampToValueAtTime(1200, screechStart + 1.4);
+  screechOsc.frequency.setValueAtTime(700, screechStart + 1.6);
+  screechOsc.frequency.linearRampToValueAtTime(2200, screechStart + 2.2);
+
+  // 12Hz Vibrato LFO (Triangle) to modulate frequency during screech
+  const lfo = ctx.createOscillator();
+  lfo.type = "triangle";
+  lfo.frequency.setValueAtTime(12, screechStart);
+
+  const lfoGain = ctx.createGain();
+  lfoGain.gain.setValueAtTime(180, screechStart);
+
+  lfo.connect(lfoGain);
+  lfoGain.connect(screechOsc.frequency);
+
+  // Bandpass filter to tame the sawtooth and make it sound like a telephone receiver
+  const screechFilter = ctx.createBiquadFilter();
+  screechFilter.type = "bandpass";
+  screechFilter.frequency.setValueAtTime(1000, screechStart);
+  screechFilter.frequency.linearRampToValueAtTime(2000, screechStart + 1.5);
+  screechFilter.Q.setValueAtTime(1.5, screechStart);
+
+  const screechGain = ctx.createGain();
+  screechGain.gain.setValueAtTime(0, screechStart);
+  screechGain.gain.linearRampToValueAtTime(0.04, screechStart + 0.05);
+  screechGain.gain.setValueAtTime(0.04, screechStart + 2.5);
+  screechGain.gain.exponentialRampToValueAtTime(0.0001, screechStop);
+
+  screechOsc.connect(screechFilter);
+  screechFilter.connect(screechGain);
+  screechGain.connect(masterGain);
+
+  registerNode(screechOsc, screechStart);
+  registerNode(lfo, screechStart);
+  screechOsc.stop(screechStop);
+  lfo.stop(screechStop);
+
+  // 2. White Noise static hiss sweep
+  const noiseBufferSize = ctx.sampleRate * screechDur;
+  const noiseBuffer = ctx.createBuffer(1, Math.floor(noiseBufferSize), ctx.sampleRate);
+  const noiseChannel = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < Math.floor(noiseBufferSize); i++) {
+    noiseChannel[i] = Math.random() * 2.0 - 1.0;
+  }
+
+  const noiseNode = ctx.createBufferSource();
+  noiseNode.buffer = noiseBuffer;
+
+  const noiseFilter = ctx.createBiquadFilter();
+  noiseFilter.type = "bandpass";
+  noiseFilter.frequency.setValueAtTime(1200, screechStart);
+  noiseFilter.frequency.linearRampToValueAtTime(2800, screechStart + 1.2);
+  noiseFilter.frequency.linearRampToValueAtTime(800, screechStart + 2.2);
+  noiseFilter.Q.setValueAtTime(1.2, screechStart);
+
+  const noiseGain = ctx.createGain();
+  noiseGain.gain.setValueAtTime(0, screechStart);
+  noiseGain.gain.linearRampToValueAtTime(0.05, screechStart + 0.1);
+  noiseGain.gain.setValueAtTime(0.05, screechStart + 2.5);
+  noiseGain.gain.exponentialRampToValueAtTime(0.0001, screechStop);
+
+  noiseNode.connect(noiseFilter);
+  noiseFilter.connect(noiseGain);
+  noiseGain.connect(masterGain);
+
+  registerNode(noiseNode, screechStart);
+  noiseNode.stop(screechStop);
+
+  // 3. Beeping negotiation tones near the end
+  const beepTime = screechStart + 2.0;
+  const beepDur = 0.9;
+  
+  const beepOsc = ctx.createOscillator();
+  beepOsc.type = "sine";
+  beepOsc.frequency.setValueAtTime(2225, beepTime);
+  beepOsc.frequency.setValueAtTime(2025, beepTime + 0.25);
+  beepOsc.frequency.setValueAtTime(2225, beepTime + 0.5);
+
+  const beepGain = ctx.createGain();
+  beepGain.gain.setValueAtTime(0, beepTime);
+  beepGain.gain.linearRampToValueAtTime(0.04, beepTime + 0.02);
+  beepGain.gain.setValueAtTime(0.04, beepTime + beepDur - 0.05);
+  beepGain.gain.exponentialRampToValueAtTime(0.0001, beepTime + beepDur);
+
+  beepOsc.connect(beepGain);
+  beepGain.connect(masterGain);
+
+  registerNode(beepOsc, beepTime);
+  beepOsc.stop(beepTime + beepDur);
+
+  // Return a controller object to stop sound instantly
+  return {
+    stop: () => {
+      try {
+        const stopTime = ctx.currentTime;
+        masterGain.gain.cancelScheduledValues(stopTime);
+        masterGain.gain.setValueAtTime(masterGain.gain.value, stopTime);
+        masterGain.gain.exponentialRampToValueAtTime(0.0001, stopTime + 0.08);
+
+        setTimeout(() => {
+          activeNodes.forEach((node) => {
+            try {
+              node.stop();
+            } catch (e) {}
+          });
+        }, 100);
+      } catch (err) {
+        console.error("Error stopping dialup synth:", err);
+      }
+    },
+  };
+}
+
+
