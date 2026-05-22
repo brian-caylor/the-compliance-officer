@@ -129,6 +129,9 @@ export const handler = async (event) => {
   const toEmail = process.env.FEEDBACK_TO_EMAIL;
   let emailDispatched = false;
 
+  const isValidEmail = (e) =>
+    typeof e === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
   if (resendApiKey && toEmail) {
     try {
       const fromEmail = process.env.FEEDBACK_FROM_EMAIL || "onboarding@resend.dev";
@@ -136,6 +139,7 @@ export const handler = async (event) => {
         from: `Compliance Officer <${fromEmail}>`,
         to: toEmail,
         subject: `⚖ Compliance Grievance: [${classification}]`,
+        ...(!anonymous && isValidEmail(email) ? { reply_to: email } : {}),
         html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; background-color: #f9f9f9;">
             <h2 style="color: #008080; border-bottom: 2px solid #008080; padding-bottom: 8px;">Compliance Grievance Deposition</h2>
