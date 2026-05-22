@@ -1,4 +1,3 @@
-import { getAudioContext } from "../../src/lib/sounds.js"; // just for matching structure if needed, not actually run on serverless
 
 export const handler = async (event) => {
   if (event.httpMethod !== "POST") {
