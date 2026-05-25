@@ -22,4 +22,5 @@ export const EVENTS = {
   CLEAR_TEXT: "co:clear-text",
   COPY_TEXT: "co:copy-text",
   PLAY_SOUND: "co:play-sound",
+  STATS_UPDATED: "co:stats-updated",
 };

@@ -33,6 +33,7 @@ const handler = async (event) => {
   }
 
   const { mode, message, subject, tone } = payload;
+  let pipsAvoided = null;
 
   if (!message || typeof message !== "string" || message.trim().length === 0) {
     return { statusCode: 400, body: JSON.stringify({ error: "Message is required" }) };
@@ -66,16 +67,18 @@ const handler = async (event) => {
           ["TTL", ipKey],
           ["INCR", globalKey],
           ["TTL", globalKey],
+          ["INCR", "global_pips_avoided"],
         ]),
       });
 
       if (pipelineResponse.ok) {
         const pipelineData = await pipelineResponse.json();
-        if (Array.isArray(pipelineData) && pipelineData.length === 4) {
+        if (Array.isArray(pipelineData) && pipelineData.length === 5) {
           const ipCount = pipelineData[0]?.result;
           const ipTtl = pipelineData[1]?.result;
           const globalCount = pipelineData[2]?.result;
           const globalTtl = pipelineData[3]?.result;
+          pipsAvoided = pipelineData[4]?.result;
 
           // Set expirations in the background if they don't exist
           const expireCommands = [];
@@ -174,6 +177,8 @@ const handler = async (event) => {
         }),
       };
     }
+
+    parsed.pipsAvoided = pipsAvoided;
 
     return {
       statusCode: 200,

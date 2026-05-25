@@ -18,6 +18,7 @@ import { STATUS_MESSAGES } from "./lib/statusMessages.js";
 import { on, emit, EVENTS } from "./lib/bus.js";
 import { getEntries } from "./lib/hallOfShame.js";
 import { getAudioContext, playSynthChimes, playSynthChord, playSynthDing, playSynthTada, playSynthFloppyDrive } from "./lib/sounds.js";
+import { apiGetStats } from "./lib/api.js";
 
 const MENU_MESSAGES = {
   File: "This feature requires Compliance Officer Pro. Contact your administrator.",
@@ -96,6 +97,7 @@ export default function App() {
   const [showFloppySave, setShowFloppySave] = useState(false);
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [pipsCount, setPipsCount] = useState(1247); // Retro baseline start count
 
   const initial = layoutFor({ w: DEFAULT_W, h: DEFAULT_H });
   const [pos, setPos] = useState(initial.pos);
@@ -212,11 +214,40 @@ export default function App() {
     return () => document.removeEventListener("click", handleGlobalClick);
   }, []);
 
-  // Phase 4: Buffer last translation submission
+  // Phase 4: Buffer last translation submission and local pip count increment
   useEffect(() => {
     const off = on(EVENTS.SUBMISSION, (e) => {
       if (e.detail) {
         setLastSubmission(e.detail);
+        if (e.detail.result && typeof e.detail.result.pipsAvoided !== "number") {
+          setPipsCount((prev) => prev + 1);
+        }
+      }
+    });
+    return off;
+  }, []);
+
+  // Fetch initial stats count on mount
+  useEffect(() => {
+    let active = true;
+    async function loadStats() {
+      const stats = await apiGetStats();
+      if (stats && typeof stats.pipsAvoided === "number" && active) {
+        setPipsCount(stats.pipsAvoided);
+      }
+    }
+    loadStats();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Listen to live stats updates
+  useEffect(() => {
+    const off = on(EVENTS.STATS_UPDATED, (e) => {
+      const val = e.detail?.pipsAvoided;
+      if (typeof val === "number") {
+        setPipsCount(val);
       }
     });
     return off;
@@ -731,6 +762,7 @@ export default function App() {
 
         <div className="status-bar">
           <p className="status-bar-field">Ready.</p>
+          <p className="status-bar-field">PIPs Avoided: {pipsCount.toLocaleString()}</p>
           {!isMobile && <p className="status-bar-field">{statusMsg}</p>}
           {!isMobile && <p className="status-bar-field">CAPS</p>}
           {!isMobile && <p className="status-bar-field">NUM</p>}

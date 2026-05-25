@@ -1,3 +1,5 @@
+import { emit, EVENTS } from "./bus.js";
+
 export function checkClientRateLimit() {
   const now = Date.now();
   let submissions = [];
@@ -54,5 +56,21 @@ export async function apiReview({ mode, message, subject, tone }) {
     throw new Error(reason + details);
   }
 
+  if (data && typeof data.pipsAvoided === "number") {
+    emit(EVENTS.STATS_UPDATED, { pipsAvoided: data.pipsAvoided });
+  }
+
   return data;
+}
+
+export async function apiGetStats() {
+  try {
+    const res = await fetch("/api/stats");
+    if (!res.ok) return { pipsAvoided: null };
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.error("Failed fetching PIPs counter:", err);
+    return { pipsAvoided: null };
+  }
 }
