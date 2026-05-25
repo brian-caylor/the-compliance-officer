@@ -1,5 +1,4 @@
 export const STATUS_MESSAGES = [
-  "1,247 violations prevented this fiscal year",
   "Last incident: 3 minutes ago",
   "EAP referrals issued: 12",
   "Pending HR review: ∞",

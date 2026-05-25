@@ -762,7 +762,7 @@ export default function App() {
 
         <div className="status-bar">
           <p className="status-bar-field">Ready.</p>
-          <p className="status-bar-field">PIPs Avoided: {pipsCount.toLocaleString()}</p>
+          <p className="status-bar-field">{pipsCount.toLocaleString()} violations prevented</p>
           {!isMobile && <p className="status-bar-field">{statusMsg}</p>}
           {!isMobile && <p className="status-bar-field">CAPS</p>}
           {!isMobile && <p className="status-bar-field">NUM</p>}
